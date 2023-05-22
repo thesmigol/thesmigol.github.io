@@ -1,1 +1,0 @@
-# thesmigol.github.io
