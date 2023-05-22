@@ -3,67 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu Perfil</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-calendar/1.1.0/github-calendar.css" />
+  <title>Flappy Bird</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
+      overflow: hidden;
     }
 
-    .container {
-      max-width: 900px;
+    #game-container {
+      width: 400px;
+      height: 500px;
       margin: 0 auto;
-      padding: 20px;
+      position: relative;
+      background-color: #70c5ce;
+      border: 2px solid #333;
     }
 
-    .header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
+    #bird {
+      width: 40px;
+      height: 30px;
+      position: absolute;
+      top: 50%;
+      left: 50px;
+      transform: translate(0, -50%);
+      background-color: #f9e25b;
+      border-radius: 5px;
     }
 
-    .avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      margin-right: 20px;
+    .pipe {
+      width: 80px;
+      position: absolute;
+      bottom: 0;
+      background-color: #83c96f;
     }
 
-    .username {
+    .pipe.upper {
+      top: 0;
+      bottom: auto;
+      transform: scaleY(-1);
+    }
+
+    #score {
       font-size: 24px;
-      font-weight: bold;
-    }
-
-    .bio {
-      font-size: 18px;
-      margin-top: 10px;
-    }
-
-    .calendar {
+      text-align: center;
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img class="avatar" src="https://avatars.githubusercontent.com/thesmigol" alt="Avatar">
-      <div>
-        <div class="username">Seu Nome</div>
-        <div class="bio">Sua descrição ou biografia</div>
-      </div>
-    </div>
-    <div class="calendar">
-      <svg class="github-calendar" data-username="thesmigol"></svg>
-    </div>
+  <h1>Flappy Bird</h1>
+  <div id="game-container">
+    <div id="bird"></div>
+    <div id="score">Score: 0</div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/github-calendar/1.1.0/github-calendar.min.js"></script>
   <script>
-    new GitHubCalendar(".github-calendar", "thesmigol");
+    var bird = document.getElementById('bird');
+    var gameContainer = document.getElementById('game-container');
+    var scoreElement = document.getElementById('score');
+
+    var gravity = 0.5;
+    var velocity = 0;
+    var position = 200;
+    var gap = 150;
+    var isGameOver = false;
+    var score = 0;
+
+    function flap() {
+      if (isGameOver) return;
+      velocity = -7;
+    }
+
+    gameContainer.addEventListener('click', flap);
+    gameContainer.addEventListener('touchstart', flap);
+
+    function updateBird() {
+      velocity += gravity;
+      position += velocity;
+      bird.style.top = position + 'px';
+
+      if (position > gameContainer.clientHeight - bird.clientHeight) {
+        gameOver();
+      }
+
+      if (position < 0) {
+        position = 0;
+        velocity = 0;
+      }
+    }
+
+    var pipes = [];
+
+    function createPipe() {
+      var pipePair = document.createElement('div');
+      var upperPipe = document.createElement('div');
+      var lowerPipe = document.createElement('div');
+
+      pipePair.classList.add('pipe');
+      upperPipe.classList.add('pipe', 'upper');
+
+      var pipeHeight = Math.random() * 200 + 100;
+      var pipeTop = gameContainer.clientHeight - pipeHeight - gap;
+
+      upperPipe.style.height = pipeHeight + 'px';
+      lowerPipe.style.height = pipeTop + 'px';
+
+      pipePair.appendChild(upperPipe);
+      pipePair.appendChild(lowerPipe);
+      gameContainer.appendChild(pipePair);
+
+      pipes.push(pipePair);
+    }
+
+    function updatePipes() {
+      for (var i = 0; i < pipes.length; i++) {
+        var pipe = pipes[i];
+        var pipeX = parseInt(pipe.style.right);
+
+        if (pipeX > gameContainer.clientWidth) {
+          pipes.splice(i, 1);
+          gameContainer.removeChild(pipe);
+        } else {
+          pipeX += 2;
+          pipe.style.right = pipeX + 'px';
+
+          if (pipeX > 180 && pipeX < 220 && position < pipe.clientHeight) {
+            gameOver();
+          }
+
+          if (pipeX === 180) {
+            score++;
+            scoreElement.textContent = 'Score: ' + score;
+          }
+        }
+      }
+    }
+
+    var gameLoop = setInterval(function() {
+      updateBird();
+      updatePipes();
+    }, 20);
+
+    function gameOver() {
+      clearInterval(gameLoop);
+      isGameOver = true;
+      gameContainer.removeEventListener('click', flap);
+      gameContainer.removeEventListener('touchstart', flap);
+    }
+
+    createPipe();
+    setInterval(createPipe, 2000);
   </script>
 </body>
 </html>
